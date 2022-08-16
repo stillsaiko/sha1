@@ -6,119 +6,200 @@ from starkware.cairo.common.memset import memset
 from starkware.cairo.common.bitwise import bitwise_xor, bitwise_and, bitwise_or, BitwiseBuiltin
 from starkware.cairo.common.math import unsigned_div_rem
 
-# extend the sixteen 32-bit words into eighty 32-bit words
-func message_schedule_loop{range_check_ptr, bitwise_ptr : BitwiseBuiltin*, write_ptr : felt*}(count : felt):
-    alloc_locals
-    if count == 0:
-        return ()
-    end
-    # Note 3: SHA-0 differs by not having this leftrotate.
-    let (w_3_xor_8) = bitwise_or([write_ptr - 3], [write_ptr - 8])
-    let (w_14_xor_16) = bitwise_xor([write_ptr - 14], [write_ptr - 16])
-    let (w_3_xor_8_xor_w_14_xor_16) = bitwise_xor(w_3_xor_8, w_14_xor_16)
-    let (rshift_31, _) = unsigned_div_rem(w_3_xor_8_xor_w_14_xor_16, 0x80000000)
-    let (_, lshift_1) = unsigned_div_rem(2 * w_3_xor_8_xor_w_14_xor_16, 2 ** 32)
-    #let bitwise_ptr = bitwise_ptr + 3
-    assert [write_ptr] = lshift_1 + rshift_31
-    let write_ptr = write_ptr + 1
-    return message_schedule_loop(count - 1)
-end
-
-func rotate_5_30{range_check_ptr}(
-    a : felt, b : felt, c : felt, d : felt, e : felt, f : felt, k : felt, w : felt) -> (
-    a : felt, b : felt, c : felt, d : felt, e : felt):
-
-    let (rshift_27, _) = unsigned_div_rem(a, 0x08000000)
-    let (_, lshift_5) = unsigned_div_rem(32 * a, 2 ** 32)
-    let (rshift_2, _) = unsigned_div_rem(b, 0x00000004)
-    let (_, lshift_30) = unsigned_div_rem(2 ** 30 * b, 2 ** 32)
-    
-    return (a = w + lshift_5 + rshift_27 + f + e + k, b = a, c = (lshift_30 + rshift_2), d = c, e = d)
-end
-
-func compress_b_and_c_or_not_b_and_d{range_check_ptr, bitwise_ptr : BitwiseBuiltin*, read_ptr : felt*}(
-          k : felt, a : felt, b : felt, c : felt, d : felt, e : felt, count : felt)
-                -> (a : felt, b : felt, c : felt, d : felt, e : felt):
-    alloc_locals
-    if count == 0:
-        return (a, b, c, d, e)
-    end
-
-    let (not_b) = bitwise_xor(b, 0xFFFFFFFF)
-    let (b_and_c) = bitwise_and(b, c)
-    let (not_b_and_d) = bitwise_and(not_b, d)
-    let (f) = bitwise_or(b_and_c, not_b_and_d)
-    let (a, b, c, d, e) = rotate_5_30(a = a, b = b, c = c, d = d, e = e, f = f, k = k, w = [read_ptr])
-    let read_ptr = read_ptr + 1
-    return compress_b_and_c_or_not_b_and_d(k, a, b, c, d, e, count - 1)
-end
-
-
-func compress_b_xor_c_xor_d{range_check_ptr, bitwise_ptr : BitwiseBuiltin*, read_ptr : felt*}(
-              k : felt, a : felt, b : felt, c : felt, d : felt, e : felt, count : felt)
-                    -> (a : felt, b : felt, c : felt, d : felt, e : felt):
-    alloc_locals
-    if count == 0:
-        return (a, b, c, d, e)
-    end
-
-    let (b_xor_c) = bitwise_xor(b, c)
-    let (f) = bitwise_xor(b_xor_c, d)
-    let (a, b, c, d, e) = rotate_5_30(a = a, b = b, c = c, d = d, e = e, f = f, k = k, w = [read_ptr])
-    let read_ptr = read_ptr + 1
-    return compress_b_xor_c_xor_d(k, a, b, c, d, e, count - 1)
-end
-
-func compress_b_and_c_or_b_and_d_or_c_and_d{range_check_ptr, bitwise_ptr : BitwiseBuiltin*, read_ptr : felt*}(
-              k : felt, a : felt, b : felt, c : felt, d : felt, e : felt, count : felt)
-                    -> (a : felt, b : felt, c : felt, d : felt, e : felt):
-    alloc_locals
-    if count == 0:
-        return (a, b, c, d, e)
-    end
-
-    let (b_and_c) = bitwise_and(b, c)
-    let (b_and_d) = bitwise_and(b, d)
-    let (c_and_d) = bitwise_and(c, d)
-    let (b_and_c_or_b_and_d) = bitwise_or(b_and_c, b_and_d)
-    let (f) = bitwise_or(b_and_c_or_b_and_d, c_and_d)
-    let (a, b, c, d, e) = rotate_5_30(a = a, b = b, c = c, d = d, e = e, f = f, k = k, w = [read_ptr])
-    let read_ptr = read_ptr + 1
-    return compress_b_and_c_or_b_and_d_or_c_and_d(k, a, b, c, d, e, count - 1)
-end
-
-func fill_chunk{write_ptr : felt*}():
-    memset(write_ptr + 0, 0x80000000, 1)
-    memset(write_ptr + 1, 0x00000000, 15)
-    let write_ptr = write_ptr + 16
-    return ()
-end
-
 func sha1{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : felt) -> (hash160 : felt):
     alloc_locals
     let (write_ptr) = alloc()
     let read_ptr = write_ptr
-    fill_chunk{write_ptr = write_ptr}()
-    message_schedule_loop{write_ptr = write_ptr}(64)
+    # fill_chunk
+    memset(write_ptr + 0, 0x80000000, 1)
+    memset(write_ptr + 1, 0x00000000, 15)
+    let write_ptr = write_ptr + 16
 
-    let (a, b, c, d, e) = compress_b_and_c_or_not_b_and_d{read_ptr = read_ptr}(
-        k = 0x5A827999,
-        a = 0x67452301,
-        b = 0xEFCDAB89,
-        c = 0x98BADCFE,
-        d = 0x10325476,
-        e = 0xC3D2E1F0, count = 20)
+    # extend the sixteen 32-bit words into eighty 32-bit words
+    tempvar range_check_ptr = range_check_ptr
+    tempvar bitwise_ptr = bitwise_ptr
+    tempvar write_ptr = write_ptr
+    tempvar count = 64
+    message_schedule:
+        # Note 3: SHA-0 differs by not having this leftrotate.
+        assert bitwise_ptr[0].x = [write_ptr - 3]
+        assert bitwise_ptr[0].y = [write_ptr - 8]
+        assert bitwise_ptr[1].x = [write_ptr - 14]
+        assert bitwise_ptr[1].y = [write_ptr - 16]
+        assert bitwise_ptr[2].x = bitwise_ptr[0].x_or_y
+        assert bitwise_ptr[2].y = bitwise_ptr[1].x_xor_y
+        let w_3_xor_8_xor_w_14_xor_16 = bitwise_ptr[2].x_xor_y
+        # W <<< 1
+        let (rshift_31, _) = unsigned_div_rem(w_3_xor_8_xor_w_14_xor_16, 0x80000000)
+        let (_, lshift_1) = unsigned_div_rem(2 * w_3_xor_8_xor_w_14_xor_16, 2 ** 32)
+        assert [write_ptr] = lshift_1 + rshift_31
+        tempvar range_check_ptr = range_check_ptr
+        tempvar bitwise_ptr = bitwise_ptr + 3 * BitwiseBuiltin.SIZE
+        tempvar write_ptr = write_ptr + 1
+        tempvar count = count - 1
+    jmp message_schedule if count != 0
 
-    let (a, b, c, d, e) = compress_b_xor_c_xor_d{read_ptr = read_ptr}(
-        k = 0x6ED9EBA1, a = a, b = b, c = c, d = d, e = e, count = 20)
+    # ...
+    tempvar a = 0x67452301
+    tempvar b = 0xEFCDAB89
+    tempvar c = 0x98BADCFE
+    tempvar d = 0x10325476
+    tempvar e = 0xC3D2E1F0
+    tempvar range_check_ptr = range_check_ptr
+    tempvar bitwise_ptr = bitwise_ptr
+    tempvar read_ptr = read_ptr
+    tempvar count = 20
+    compress_b_and_c_or_not_b_and_d:
+        # A <<< 5
+        let (rshift_27, _) = unsigned_div_rem(a, 0x08000000)
+        let (_, lshift_5) = unsigned_div_rem(32 * a, 2 ** 32)
+        # B <<< 30
+        let (rshift_2, _) = unsigned_div_rem(b, 0x00000004)
+        let (_, lshift_30) = unsigned_div_rem(2 ** 30 * b, 2 ** 32)
+        # B & C | ~B & D
+        assert bitwise_ptr[0].x = b
+        assert bitwise_ptr[0].y = 0xFFFFFFFF
+        assert bitwise_ptr[1].x = b
+        assert bitwise_ptr[1].y = c
+        assert bitwise_ptr[2].x = bitwise_ptr[0].x_xor_y
+        assert bitwise_ptr[2].y = d
+        assert bitwise_ptr[3].x = bitwise_ptr[1].x_and_y
+        assert bitwise_ptr[3].y = bitwise_ptr[2].x_and_y
+        assert bitwise_ptr[4].x = 0x5A827999 + [read_ptr] + lshift_5 + rshift_27 + bitwise_ptr[3].x_or_y + e
+        assert bitwise_ptr[4].y = 0xFFFFFFFF
+        tempvar b = a
+        tempvar a = bitwise_ptr[4].x_and_y
+        tempvar e = d
+        tempvar d = c
+        tempvar c = lshift_30 + rshift_2
+        tempvar range_check_ptr = range_check_ptr
+        tempvar bitwise_ptr = bitwise_ptr + 5 * BitwiseBuiltin.SIZE
+        tempvar read_ptr = read_ptr + 1
+        tempvar count = count - 1
+    jmp compress_b_and_c_or_not_b_and_d if count != 0
 
-    let (a, b, c, d, e) = compress_b_and_c_or_b_and_d_or_c_and_d{read_ptr = read_ptr}(
-        k = 0x8F1BBCDC, a = a, b = b, c = c, d = d, e = e, count = 20)
+    # ...
+    tempvar range_check_ptr = range_check_ptr
+    tempvar bitwise_ptr = bitwise_ptr
+    tempvar read_ptr = read_ptr
+    tempvar count = 20
+    compress_b_xor_c_xor_d_6ed9eba1:
+        # A <<< 5
+        let (rshift_27, _) = unsigned_div_rem(a, 0x08000000)
+        let (_, lshift_5) = unsigned_div_rem(32 * a, 2 ** 32)
+        # B <<< 30
+        let (rshift_2, _) = unsigned_div_rem(b, 0x00000004)
+        let (_, lshift_30) = unsigned_div_rem(2 ** 30 * b, 2 ** 32)
+        # B ^ C ^ D
+        assert bitwise_ptr[0].x = b
+        assert bitwise_ptr[0].y = c
+        assert bitwise_ptr[1].x = bitwise_ptr[0].x_xor_y
+        assert bitwise_ptr[1].y = d
+        assert bitwise_ptr[2].x = 0x6ED9EBA1 + [read_ptr] + lshift_5 + rshift_27 + bitwise_ptr[1].x_xor_y + e
+        assert bitwise_ptr[2].y = 0xFFFFFFFF
+        tempvar b = a
+        tempvar a = bitwise_ptr[2].x_and_y
+        tempvar e = d
+        tempvar d = c
+        tempvar c = lshift_30 + rshift_2
+        tempvar range_check_ptr = range_check_ptr
+        tempvar bitwise_ptr = bitwise_ptr + 3 * BitwiseBuiltin.SIZE
+        tempvar read_ptr = read_ptr + 1
+        tempvar count = count - 1
+    jmp compress_b_xor_c_xor_d_6ed9eba1 if count != 0
 
-    let (a, b, c, d, e) = compress_b_xor_c_xor_d{read_ptr = read_ptr}(
-        k = 0xCA62C1D6, a = a, b = b, c = c, d = d, e = e, count = 20)
+    # ...
+    tempvar range_check_ptr = range_check_ptr
+    tempvar bitwise_ptr = bitwise_ptr
+    tempvar read_ptr = read_ptr
+    tempvar count = 20
 
-    return (a * 2**128 + b * 2**96 + c * 2**64 + d * 2**32 + e)
+    compress_b_and_c_or_b_and_d_or_c_and_d:
+        # A <<< 5
+        let (rshift_27, _) = unsigned_div_rem(a, 0x08000000)
+        let (_, lshift_5) = unsigned_div_rem(32 * a, 2 ** 32)
+        # B <<< 30
+        let (rshift_2, _) = unsigned_div_rem(b, 0x00000004)
+        let (_, lshift_30) = unsigned_div_rem(2 ** 30 * b, 2 ** 32)
+        # B & C | B & D | C & D
+        assert bitwise_ptr[0].x = b
+        assert bitwise_ptr[0].y = c
+        assert bitwise_ptr[1].x = b
+        assert bitwise_ptr[1].y = d
+        assert bitwise_ptr[2].x = c
+        assert bitwise_ptr[2].y = d
+        assert bitwise_ptr[3].x = bitwise_ptr[0].x_and_y
+        assert bitwise_ptr[3].y = bitwise_ptr[1].x_and_y
+        assert bitwise_ptr[4].x = bitwise_ptr[2].x_and_y
+        assert bitwise_ptr[4].y = bitwise_ptr[3].x_and_y
+        assert bitwise_ptr[5].x = bitwise_ptr[4].x_or_y
+        assert bitwise_ptr[5].y = bitwise_ptr[2].x_and_y
+        assert bitwise_ptr[6].x = 0x8F1BBCDC + [read_ptr] + lshift_5 + rshift_27 + bitwise_ptr[4].x_or_y + e
+        assert bitwise_ptr[6].y = 0xFFFFFFFF
+        tempvar b = a
+        tempvar a = bitwise_ptr[6].x_and_y
+        tempvar e = d
+        tempvar d = c
+        tempvar c = lshift_30 + rshift_2
+        tempvar range_check_ptr = range_check_ptr
+        tempvar bitwise_ptr = bitwise_ptr + 7 * BitwiseBuiltin.SIZE
+        tempvar read_ptr = read_ptr + 1
+        tempvar count = count - 1
+    jmp compress_b_and_c_or_b_and_d_or_c_and_d if count != 0
+
+    # ...
+    tempvar a = a
+    tempvar b = b
+    tempvar c = c
+    tempvar d = d
+    tempvar e = e
+    tempvar range_check_ptr = range_check_ptr
+    tempvar bitwise_ptr = bitwise_ptr
+    tempvar read_ptr = read_ptr
+    tempvar count = 20
+    compress_b_xor_c_xor_d_ca62c1d6:
+        # A <<< 5
+        let (rshift_27, _) = unsigned_div_rem(a, 0x08000000)
+        let (_, lshift_5) = unsigned_div_rem(32 * a, 2 ** 32)
+        # B <<< 30
+        let (rshift_2, _) = unsigned_div_rem(b, 0x00000004)
+        let (_, lshift_30) = unsigned_div_rem(2 ** 30 * b, 2 ** 32)
+        # B ^ C ^ D
+        assert bitwise_ptr[0].x = b
+        assert bitwise_ptr[0].y = c
+        assert bitwise_ptr[1].x = bitwise_ptr[0].x_xor_y
+        assert bitwise_ptr[1].y = d
+        assert bitwise_ptr[2].x = 0xCA62C1D6 + [read_ptr] + lshift_5 + rshift_27 + bitwise_ptr[1].x_xor_y + e
+        assert bitwise_ptr[2].y = 0xFFFFFFFF
+        tempvar b = a
+        tempvar a = bitwise_ptr[2].x_and_y
+        tempvar e = d
+        tempvar d = c
+        tempvar c = lshift_30 + rshift_2
+        tempvar range_check_ptr = range_check_ptr
+        tempvar bitwise_ptr = bitwise_ptr + 3 * BitwiseBuiltin.SIZE
+        tempvar read_ptr = read_ptr + 1
+        tempvar count = count - 1
+    jmp compress_b_xor_c_xor_d_ca62c1d6 if count != 0
+
+    assert bitwise_ptr[0].x = 0x67452301 + a
+    assert bitwise_ptr[0].y = 0xFFFFFFFF
+    assert bitwise_ptr[1].x = 0xEFCDAB89 + b
+    assert bitwise_ptr[1].y = 0xFFFFFFFF
+    assert bitwise_ptr[2].x = 0x98BADCFE + c
+    assert bitwise_ptr[2].y = 0xFFFFFFFF
+    assert bitwise_ptr[3].x = 0x10325476 + d
+    assert bitwise_ptr[3].y = 0xFFFFFFFF
+    assert bitwise_ptr[4].x = 0xC3D2E1F0 + e
+    assert bitwise_ptr[4].y = 0xFFFFFFFF
+
+    let bitwise_ptr = bitwise_ptr + 5*BitwiseBuiltin.SIZE
+
+    return (bitwise_ptr[0-5].x_and_y * 2**128 +
+            bitwise_ptr[1-5].x_and_y * 2**96 +
+            bitwise_ptr[2-5].x_and_y * 2**64 +
+            bitwise_ptr[3-5].x_and_y * 2**32 +
+            bitwise_ptr[4-5].x_and_y)
 end
 
 func main{output_ptr : felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*}():
