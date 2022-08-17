@@ -1,12 +1,11 @@
-%builtins output range_check bitwise
+%builtins range_check bitwise
 
-from starkware.cairo.common.serialize import serialize_word
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memset import memset
 from starkware.cairo.common.bitwise import bitwise_xor, bitwise_and, bitwise_or, BitwiseBuiltin
 from starkware.cairo.common.math import unsigned_div_rem
 
-func sha1{output_ptr : felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : felt) -> (hash160 : felt):
+func sha1{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : felt) -> (hash160 : felt):
 	alloc_locals
 	let (w) = alloc()
 	# fill_chunk
@@ -220,7 +219,7 @@ func sha1{output_ptr : felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(in
 			bitwise_ptr[-1].x_and_y)
 end
 
-func main{output_ptr : felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*}():
+func main{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}():
 	alloc_locals
 	let (input) = alloc()
 	let (hash160) = sha1(input, 0)
