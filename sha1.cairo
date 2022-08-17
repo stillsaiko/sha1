@@ -227,8 +227,8 @@ func main{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}():
 	assert hash160 = 0xda39a3ee5e6b4b0d3255bfef95601890afd80709
 	# test dynamic implicit
 	%{
-		import hashlib
-		assert ids.hash160 == int(hashlib.sha1(b"").hexdigest(), 16)
+import hashlib
+assert ids.hash160 == int(hashlib.sha1(b"").hexdigest(), 16)
 	%}
 	return ()
 end
