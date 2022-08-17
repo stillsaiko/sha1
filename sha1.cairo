@@ -213,10 +213,10 @@ func sha1{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : 
 	let bitwise_ptr = bitwise_ptr + 5*BitwiseBuiltin.SIZE
 
 	return (bitwise_ptr[-5].x_and_y * 2**128 +
-			bitwise_ptr[-4].x_and_y * 2**96 +
-			bitwise_ptr[-3].x_and_y * 2**64 +
-			bitwise_ptr[-2].x_and_y * 2**32 +
-			bitwise_ptr[-1].x_and_y)
+		bitwise_ptr[-4].x_and_y * 2**96 +
+		bitwise_ptr[-3].x_and_y * 2**64 +
+		bitwise_ptr[-2].x_and_y * 2**32 +
+		bitwise_ptr[-1].x_and_y)
 end
 
 func main{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}():
