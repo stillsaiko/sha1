@@ -20,16 +20,16 @@ func sha1{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : 
 	tempvar count = 64
 	message_schedule:
 		# Note 3: SHA-0 differs by not having this leftrotate.
-        assert bitwise_ptr[0].x = [w - 3]
-        assert bitwise_ptr[0].y = [w - 8]
-        assert bitwise_ptr[1].x = [w - 14]
-        assert bitwise_ptr[1].y = [w - 16]
+		assert bitwise_ptr[0].x = [w - 3]
+		assert bitwise_ptr[0].y = [w - 8]
+		assert bitwise_ptr[1].x = [w - 14]
+		assert bitwise_ptr[1].y = [w - 16]
 		assert bitwise_ptr[2].x = bitwise_ptr[0].x_xor_y
 		assert bitwise_ptr[2].y = bitwise_ptr[1].x_xor_y
 		# W <<< 1
 		let (rshift_31, _) = unsigned_div_rem(bitwise_ptr[2].x_or_y, 0x80000000)
-        assert bitwise_ptr[3].x = 2 * bitwise_ptr[2].x_xor_y + rshift_31
-        assert bitwise_ptr[3].y = 0xFFFFFFFF
+		assert bitwise_ptr[3].x = 2 * bitwise_ptr[2].x_xor_y + rshift_31
+		assert bitwise_ptr[3].y = 0xFFFFFFFF
 		assert [w] = bitwise_ptr[3].x_and_y
 		tempvar range_check_ptr = range_check_ptr
 		tempvar bitwise_ptr = bitwise_ptr + 4 * BitwiseBuiltin.SIZE
@@ -51,11 +51,11 @@ func sha1{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : 
 	tempvar w = w
 	tempvar count = 20
 	compress_b_and_c_or_not_b_and_d:
-        let k = 0x5A827999
-        # A <<< 5
-        let (rshift_27, _) = unsigned_div_rem(a, 2 ** 27)
-        # B <<< 30
-        let (rshift_2, _) = unsigned_div_rem(b, 2 ** 2)
+		let k = 0x5A827999
+		# A <<< 5
+		let (rshift_27, _) = unsigned_div_rem(a, 2 ** 27)
+		# B <<< 30
+		let (rshift_2, _) = unsigned_div_rem(b, 2 ** 2)
 		# B & C | ~B & D
 		assert bitwise_ptr[0].x = b
 		assert bitwise_ptr[0].y = 0xFFFFFFFF
@@ -65,15 +65,15 @@ func sha1{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : 
 		assert bitwise_ptr[2].y = d
 		assert bitwise_ptr[3].x = bitwise_ptr[1].x_and_y
 		assert bitwise_ptr[3].y = bitwise_ptr[2].x_and_y
-        let f = bitwise_ptr[3].x_or_y
-        assert bitwise_ptr[4].x = (a * 2 ** 5 + rshift_27) + f + e + 0x5A827999 + [w]
-        assert bitwise_ptr[4].y = 0xFFFFFFFF
-        assert bitwise_ptr[5].x = b * 2 ** 30 + rshift_2
-        assert bitwise_ptr[5].y = 0xFFFFFFFF
-        # f = (b & c) | ((~ b) & d)
-        # temp = (a << 5 | a >> 27) + f + e + k + w[i]
-        let temp = bitwise_ptr[4].x_and_y
-        # (a, b, c, d, e) <- (temp, a, (b << 30 | b >> 2), c, d)
+		let f = bitwise_ptr[3].x_or_y
+		assert bitwise_ptr[4].x = (a * 2 ** 5 + rshift_27) + f + e + 0x5A827999 + [w]
+		assert bitwise_ptr[4].y = 0xFFFFFFFF
+		assert bitwise_ptr[5].x = b * 2 ** 30 + rshift_2
+		assert bitwise_ptr[5].y = 0xFFFFFFFF
+		# f = (b & c) | ((~ b) & d)
+		# temp = (a << 5 | a >> 27) + f + e + k + w[i]
+		let temp = bitwise_ptr[4].x_and_y
+		# (a, b, c, d, e) <- (temp, a, (b << 30 | b >> 2), c, d)
 		tempvar e = d
 		tempvar d = c
 		tempvar c = bitwise_ptr[5].x_and_y
@@ -87,11 +87,11 @@ func sha1{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : 
 
 	# f = b xor c xor d
 	# k = 0x6ED9EBA1
-    tempvar e = e
-    tempvar d = d
-    tempvar c = c
-    tempvar b = b
-    tempvar a = a
+	tempvar e = e
+	tempvar d = d
+	tempvar c = c
+	tempvar b = b
+	tempvar a = a
 	tempvar range_check_ptr = range_check_ptr
 	tempvar bitwise_ptr = bitwise_ptr
 	tempvar w = w
@@ -106,10 +106,10 @@ func sha1{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : 
 		assert bitwise_ptr[0].y = c
 		assert bitwise_ptr[1].x = bitwise_ptr[0].x_xor_y
 		assert bitwise_ptr[1].y = d
-        assert bitwise_ptr[2].x = 0x6ED9EBA1 + [w] + (2 ** 5 * a + rshift_27) + bitwise_ptr[1].x_xor_y + e
-        assert bitwise_ptr[2].y = 0xFFFFFFFF
-        assert bitwise_ptr[3].x = 2 ** 30 * b + rshift_2
-        assert bitwise_ptr[3].y = 0xFFFFFFFF
+		assert bitwise_ptr[2].x = 0x6ED9EBA1 + [w] + (2 ** 5 * a + rshift_27) + bitwise_ptr[1].x_xor_y + e
+		assert bitwise_ptr[2].y = 0xFFFFFFFF
+		assert bitwise_ptr[3].x = 2 ** 30 * b + rshift_2
+		assert bitwise_ptr[3].y = 0xFFFFFFFF
 		tempvar e = d
 		tempvar d = c
 		tempvar c = bitwise_ptr[3].x_and_y
@@ -123,11 +123,11 @@ func sha1{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : 
 
 	# f = (b and c) or (b and d) or (c and d) 
 	# k = 0x8F1BBCDC
-    tempvar e = e
-    tempvar d = d
-    tempvar c = c
-    tempvar b = b
-    tempvar a = a
+	tempvar e = e
+	tempvar d = d
+	tempvar c = c
+	tempvar b = b
+	tempvar a = a
 	tempvar range_check_ptr = range_check_ptr
 	tempvar bitwise_ptr = bitwise_ptr
 	tempvar w = w
@@ -146,12 +146,12 @@ func sha1{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : 
 		assert bitwise_ptr[2].y = d
 		assert bitwise_ptr[3].x = bitwise_ptr[0].x_and_y
 		assert bitwise_ptr[3].y = bitwise_ptr[1].x_and_y
-        assert bitwise_ptr[4].x = bitwise_ptr[2].x_and_y
-        assert bitwise_ptr[4].y = bitwise_ptr[3].x_or_y
-        assert bitwise_ptr[5].x = 0x8F1BBCDC + [w] + (2 ** 5 * a + rshift_27) + bitwise_ptr[4].x_or_y + e
-        assert bitwise_ptr[5].y = 0xFFFFFFFF
-        assert bitwise_ptr[6].x = 2 ** 30 * b + rshift_2
-        assert bitwise_ptr[6].y = 0xFFFFFFFF
+		assert bitwise_ptr[4].x = bitwise_ptr[2].x_and_y
+		assert bitwise_ptr[4].y = bitwise_ptr[3].x_or_y
+		assert bitwise_ptr[5].x = 0x8F1BBCDC + [w] + (2 ** 5 * a + rshift_27) + bitwise_ptr[4].x_or_y + e
+		assert bitwise_ptr[5].y = 0xFFFFFFFF
+		assert bitwise_ptr[6].x = 2 ** 30 * b + rshift_2
+		assert bitwise_ptr[6].y = 0xFFFFFFFF
 		tempvar e = d
 		tempvar d = c
 		tempvar c = bitwise_ptr[6].x_and_y
@@ -182,12 +182,12 @@ func sha1{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input : felt*, size : 
 		# B ^ C ^ D
 		assert bitwise_ptr[0].x = b
 		assert bitwise_ptr[0].y = c
-        assert bitwise_ptr[1].x = bitwise_ptr[0].x_xor_y
-        assert bitwise_ptr[1].y = d
-        assert bitwise_ptr[2].x = 0xCA62C1D6 + [w] + (2 ** 5 * a + rshift_27) + bitwise_ptr[1].x_xor_y + e
-        assert bitwise_ptr[2].y = 0xFFFFFFFF
-        assert bitwise_ptr[3].x = 2 ** 30 * b + rshift_2
-        assert bitwise_ptr[3].y = 0xFFFFFFFF
+		assert bitwise_ptr[1].x = bitwise_ptr[0].x_xor_y
+		assert bitwise_ptr[1].y = d
+		assert bitwise_ptr[2].x = 0xCA62C1D6 + [w] + (2 ** 5 * a + rshift_27) + bitwise_ptr[1].x_xor_y + e
+		assert bitwise_ptr[2].y = 0xFFFFFFFF
+		assert bitwise_ptr[3].x = 2 ** 30 * b + rshift_2
+		assert bitwise_ptr[3].y = 0xFFFFFFFF
 		tempvar e = d
 		tempvar d = c
 		tempvar c = bitwise_ptr[3].x_and_y
