@@ -1,5 +1,5 @@
 # sha1
-cairo 0.10
+```cairo 0.10```
 ```
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
