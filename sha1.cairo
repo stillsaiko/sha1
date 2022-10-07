@@ -91,7 +91,6 @@ func sha1_prepare_chunk{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}(
 
 func sha1_message_schedule{bitwise_ptr: BitwiseBuiltin*}(chunk_ptr: felt*) {
     alloc_locals;
-    local chunk_ptr_start: felt* = chunk_ptr;
     tempvar bitwise_ptr = bitwise_ptr;
     tempvar chunk_ptr   = chunk_ptr + WORDS_PER_INPUT;
     tempvar n_words     = WORDS_PER_CHUNK - WORDS_PER_INPUT;
