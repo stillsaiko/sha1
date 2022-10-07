@@ -12,4 +12,4 @@ func main{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}() {
     return ();
 }
 ```
-```cairo v0.10```
+```cairo 0.10```
