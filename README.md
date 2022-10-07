@@ -2,7 +2,7 @@
 ```
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
-from sha import sha
+from sha1 import sha1
 func main{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}() {
     alloc_locals;
     let uint32_ptr = alloc();
