@@ -21,11 +21,11 @@ const BYTE = 2**8;
 const WORD = 2**32;
 
 func min{range_check_ptr}(a, b) -> felt {
-	if(is_nn(b - a) == TRUE) {
-		return a;
-	} else {
-		return b;
-	}
+    if(is_nn(b - a) == TRUE) {
+        return a;
+    } else {
+        return b;
+    }
 }
 
 const BYTES_PER_INPUT = 64;
@@ -225,9 +225,9 @@ func __sha1{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}(h_0, h_1, h_2, h_3, h
 }
 
 func sha1{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}(data_ptr: felt*, n_bytes) -> felt {
-	alloc_locals;
-	let (chunk_ptr) = alloc();
-	let (n_words, _) = unsigned_div_rem(n_bytes + SIZEOF_UINT32-1, SIZEOF_UINT32);
+    alloc_locals;
+    let (chunk_ptr) = alloc();
+    let (n_words, _) = unsigned_div_rem(n_bytes + SIZEOF_UINT32-1, SIZEOF_UINT32);
     let (n_chunks, _) = unsigned_div_rem(n_words + 17, 16);
     return __sha1(0x67452301,
                   0xEFCDAB89, 
