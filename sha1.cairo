@@ -229,10 +229,9 @@ func sha1{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}(data_ptr: felt*, n_byte
 	let (chunk_ptr) = alloc();
 	let (n_words, _) = unsigned_div_rem(n_bytes + SIZEOF_UINT32-1, SIZEOF_UINT32);
     let (n_chunks, _) = unsigned_div_rem(n_words + 17, 16);
-    let h_01234 = __sha1(0x67452301,
-                         0xEFCDAB89, 
-                         0x98BADCFE,
-                         0x10325476,
-                         0xC3D2E1F0, n_chunks, chunk_ptr, data_ptr, n_words, n_bytes, 8 * n_bytes);
-    return h_01234;
+    return __sha1(0x67452301,
+                  0xEFCDAB89, 
+                  0x98BADCFE,
+                  0x10325476,
+                  0xC3D2E1F0, n_chunks, chunk_ptr, data_ptr, n_words, n_bytes, 8 * n_bytes);
 }
