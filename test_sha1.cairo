@@ -4,7 +4,7 @@
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 
-from sha1 import sha1
+from sha1 import sha1, BYTE
 
 @external
 func test_sha1_empty{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}() {
