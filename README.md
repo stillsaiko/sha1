@@ -1,5 +1,4 @@
 # sha1
-```cairo 0.10```
 ```
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
@@ -14,3 +13,4 @@ func main{range_check_ptr, bitwise_ptr: BitwiseBuiltin*}() {
     return ();
 }
 ```
+```cairo 0.10```
